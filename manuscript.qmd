@@ -1,0 +1,39 @@
+---
+title: Memory mechanisms in transformer language models
+author:
+    - name: Kristijan Armeni
+      affiliation: Johns Hopkins University, Department of Psychological and Brain Sciences
+    - name: Tal Linzen
+      affiliation: 
+      - name: New York University, Department of Linguistics
+      - name: New York University, Center for Data Science
+    - name: Christopher Honey
+      affiliation: Johns Hopkins University, Department of Psychological and Brain Sciences
+jupyter: python3
+toc: true
+number-sections: true
+highlight-style: pygments  
+abstract: TBA
+bibliography: library.bib
+format:
+  html: 
+    fig-width: 6
+    fig-height: 3
+---
+
+# Introduction
+
+Flexibly maintaining and accessing recent text from short-term memory is a core computation in human [@elman_finding_1990] Flexibly maintaining and accessing recent text from short-term memory is a core computation in human [@baddeley_working_2003-1; @cowan_what_2008; @oberauer_benchmarks_2018] and artificial systems [@elman_finding_1990; @nematzadeh_memory_2020] predicting and generating natural language. For example, when we are told 'Your ticket number is 172' and shortly after asked 'What is your ticket number?' we retrieve the number '172' from short-term memory.
+
+Contemporary transformer-based language models [LM, @vaswani_attention_2017] are currently the most successful algorithms at predicting words based on context and, seemingly, many natural language tasks that can be reformatted as text generation. A possible reason is that by weighing all context words in a task-relevant manner [attention, @bahdanau_neural_2014], transformers learn to retrieve the past tokens that are relevant in order to correctly predict upcoming words, a kind of short-term memory retrieval. For example, the ability to solve tasks by completing text prompts containing instructions and a small number of examples, without any explicit parameter updates, (in-context learning, see @liu_pre-train_2021, for review) suggests that transformer LMs do so by retrieving instructions and relevant examples from short-term memory.
+
+```{python}
+import sys; sys.path.append("/users/kriarm/project/lm-mem/code/")
+from wm_suite.viz.ablation import fig_attn
+from paths import get_paths
+from matplotlib import pyplot as plt
+
+cfg = get_paths()
+fig = fig_attn.main(["--which", "main_fig", "--datadir", cfg.data]);
+plt.show()
+```
