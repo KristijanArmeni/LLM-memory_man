@@ -69,6 +69,18 @@ Previous experiments showed that GPT-2 could retrieve verbatim sequences of noun
 
 # Ablation experiment
 
-## Targeted (attention-based) ablation
+So far, we showed that transformer language models (in our case GPT-2), contain attention heads that upon encountering a repeated token $c_{t+k}$ (query) attended back either to its first occurrence $c_t$, $k$ tokens ago, or towards the nouns $n_{t+1}$ that followed $c_t$ (postmatch nouns). Such selective attention patterns make them potential candidate heads for short-term memory retrieval [@elhage_mathematical_2021; @olsson_-context_2022]. If so, are these heads with strongly selective attention patterns, necessary for GPT-2 retrieval?
 
-To test for the causal efficacy of selected attention heads based on their attention patterns
+## Methods
+
+**Zero ablation** To remove the contribution of any single head in the model, we set the attention weights $\alpha$ of an attention head to $0$ after they were computed in the forward pass. Thus, the output of the ablated attention head $k$ for current layer $\textbf{h}^k_l = \mathbf{W}^v \alpha^0 =\mathbf{0}$, a product of value vectors $\mathbf{W}^v$ with the zeroed attention weights $\alpha^0$, resulted in a zero vector $\mathbf{0}$ which was added to the concatenated layer output $\mathbf{z}_l$ (e.g. $\mathbf{z}_l = [h^1, h^2_{*}=\mathbf{0}, ... h^{12}])$. After the ablation, $\mathbf{z}_l$ was projected via output weights $\mathbf{W^o}$ and added to token representations $\mathbf{x}_{l-1}$ computed by the previous layer (a.k.a the residual stream) in order to compute updated token representations for the current layer $\mathbf{x}_{l} = \mathbf{x}_{l-1} + W^o\mathbf{z}_l$.
+
+**Quantifying memory retrieval** We re-evaluated the ablated models on the short-term memory task measuring LM verbatim retrieval of nouns from context [@armeni_characterizing_2022]. In this experiment, the nouns ($n_{t+1}$) that followed the original colon $c_t$ were now repeated $k$ tokens later, after the second occurrence of the colon token $c_{t+k}$. Verbatim retrieval was operationalized as *repeat surprisal*: the ratio (expressed as percentage) of GPT-2 surprisal on the two list non-initial nouns $n_{(t+2)} = [w_{(t+2)}, w_{(t+3)}]$ in the first list relative to the same nouns $n_{(t+k+2)} = [w_{(t+k+2)}, w_{(t+k+3)}]$ in the second list. Prior to computing the ratio, list-specific surprisal was averaged across the two tokens. We decided to quantify repeat surprisal at list non-initial nouns because the memory effect stabilizes after the first noun in the list [@armeni_characterizing_2022]. A reduction in repeat surprisal (i.e. \< 100%) indicates the degree to which GPT-2 expected the same nouns to reoccur. GPT-2 has a near-zero repeat surprisal (i.e. near perfect retrieval) on sequences of repeated arbitrary nouns [@armeni_characterizing_2022]. A maximally effective ablation that rendered the model incapable of retrieving the nouns would therefore lead to a repeat surprisal of 100%.
+
+**Greedy search** In order to find a set of heads among $n$ selected heads $\mathbf{H} = [h_1, h_2, ..., h_n]$ that support the performance on the retrieval task, we ran a greedy search procedure. We started by ablating each head in $\mathbf{H}$ individually and logged the head $h_{max}$ with the strongest effect on memory retrieval. In the subsequent iteration, we then ablated all possible pairs consisting of $h_{max}$ and each of the remaining heads in $\mathbf{H}$. We logged the maximally effective pair of heads and in the next iteration proceeded to ablate all possible combinations of the maximal pair and each of the remaining heads in $\mathbf{H}$ etc. The search was stopped early if 6 consecutive iterations did not have lead to least 0.5% increase in repeat surprisal.
+
+**Copying score**
+
+## Results
+
+------------------------------------------------------------------------
