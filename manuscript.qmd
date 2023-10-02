@@ -9,16 +9,23 @@ author:
       - name: New York University, Center for Data Science
     - name: Christopher Honey
       affiliation: Johns Hopkins University, Department of Psychological and Brain Sciences
-jupyter: python3
 toc: true
+footnotes-hover: true
 number-sections: true
-highlight-style: pygments  
-abstract: TBA
+abstract: |
+  Retrieving specific items from recent input is a core computation in humans and artificial systems that predict and 
+  generate language. This is a form of short-term memory, as when we encounter arbitrary items {'a','b','c'}, and we 
+  must later retrieve them in order.  It was recently shown that transformer language models can retrieve verbatim 
+  copies of arbitrary nouns that occurred earlier in text. What are transformer mechanisms that support short-term 
+  memory? Analyzing GPT-2 attention in a short-term memory task, we found that, upon detecting a repeated token (e.g. a 
+  repetition of 'b'), a distributed set of attention heads in early/middle layers attended to the matching token (i.e. 
+  original 'b') whereas a distributed set of heads in late layers attended to the tokens that _followed_ the 
+  matching token (i.e. original 'c'). Ablating a small number of matching heads drastically hurt GPT-2's ability to 
+  retrieve post-match nouns, suggesting matching heads have causal primacy over post-match heads. Finally, we show that 
+  the circuits generalize to other tasks: ablating the short-term memory circuit also hurts GPT-2 language modeling 
+  performance and the ability to retrieve the grammatical number of past tokens.
 bibliography: library.bib
-format:
-  html: 
-    fig-width: 6
-    fig-height: 3
+format: html
 ---
 
 # Introduction
@@ -28,12 +35,40 @@ Flexibly maintaining and accessing recent text from short-term memory is a core 
 Contemporary transformer-based language models [LM, @vaswani_attention_2017] are currently the most successful algorithms at predicting words based on context and, seemingly, many natural language tasks that can be reformatted as text generation. A possible reason is that by weighing all context words in a task-relevant manner [attention, @bahdanau_neural_2014], transformers learn to retrieve the past tokens that are relevant in order to correctly predict upcoming words, a kind of short-term memory retrieval. For example, the ability to solve tasks by completing text prompts containing instructions and a small number of examples, without any explicit parameter updates, (in-context learning, see @liu_pre-train_2021, for review) suggests that transformer LMs do so by retrieving instructions and relevant examples from short-term memory.
 
 ```{python}
-import sys; sys.path.append("/users/kriarm/project/lm-mem/code/")
+#| echo: false
+#| out-width: 100%
+#| fig-cap: Testing the figure caption.
 from wm_suite.viz.ablation import fig_attn
-from paths import get_paths
-from matplotlib import pyplot as plt
+from wm_suite.paths import get_paths
+from wm_suite.utils import set_logger_level
+
+set_logger_level("critical")
 
 cfg = get_paths()
-fig = fig_attn.main(["--which", "main_fig", "--datadir", cfg.data]);
-plt.show()
+cfg.data = 'c:\\users\\karmeni1\\project\\lm-mem\\data\\ablation'
+fig = fig_attn.make_plot(datadir=cfg.data, query="colon-colon-p1")
 ```
+
+# Attention in verbatim retrieval
+
+Previous experiments showed that GPT-2 could retrieve verbatim sequences of nouns from past context [@armeni_characterizing_2022]. The evidence for this short-term memory ability was obtained by showing that GPT-2 surprisal on a sequence of arbitrary nouns reduced by nearly 100% (to a near-zero absolute surprisal) if the same sequence has occurred earlier in text. This relative change in surprisal indicated to what extent GPT-2 expected the same nouns to reoccur (and, by extension, to what extent it retrieved the past representations of these nouns). Here, we were interested in attention patterns at the moment when the model is about to retrieve the repeated second list: are there attention heads in GPT-2 that attend to the original list of nouns?
+
+## Methods
+
+**Attention pattern analysis** To characterize the attention patterns in GPT-2, we tested what attention heads attended from the second colon $c_{t+k}$ (occurring $k$ tokens after the original colon \$c_t\$) towards the following target time-windows: a) the original colon $c_t$ (match token), b) the three nouns $n_{t+1}= [w_{t+1}, w_{t+2}, w_{t+3}]$[^1] that originally followed the match token (postmatch tokens), and c) towards three recent tokens ($[w_{(t+k)-3}, w_{(t+k)-2}, w_{(t+k)-1}]$) immediately preceding $c_{t+k}$. In each time-window, we\[\^New fotnote\] selected heads that fell into the top-20 heads with strongest attention and had at least the (summed) attention score of 0.2 (i.e. heads had to place at least one fifth of their probability mass to the target tokens). For target time windows that contained multiple tokens, we summed the attention weights over the tokens.
+
+[^1]: In the notation and analysis, we excluded the comma tokens (serving as enumeration symbols) as these receive near-zero attention (see Fig. \ref{fig:attn_weights_example}).
+
+**Verbatim retrieval** In the original experiment by [@armeni_characterizing_2022] there were a total of $N = 23$ noun lists, each containing $10$ arbitrary nouns.[^2] Each list was additionally circularly shifted such that each noun was tested in all ordinal list positions. This resulted in the total of $23 \times 10 = 230$ noun lists. Here, we analyzed the version of the experiment with the shortest sequences where list length was kept at 3 nouns. We report attention scores averaged across the $N = 230$ total sequences. Each input sequence was the same except for the list of nouns used to fill the noun list slot in the template (see Appendix \ref{app:paradigm} for details).
+
+[^2]: The nouns were sampled from the Toronto Noun Word Pool curated to test working memory in human experiments: [http://memory.psych.upenn.edu/files/wordpools/nouns.txt](#0).
+
+## Results
+
+**Attention heads attending to match tokens (matching heads) are sparse and found in early layers.**
+
+# Ablation experiment
+
+## Targeted (attention-based) ablation
+
+To test for the causal efficacy of selected attention heads based on their attention patterns
