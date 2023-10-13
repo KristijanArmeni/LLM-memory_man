@@ -30,9 +30,15 @@ format: html
 
 # Introduction
 
-Flexibly maintaining and accessing recent text from short-term memory is a core computation in human [@elman_finding_1990] Flexibly maintaining and accessing recent text from short-term memory is a core computation in human [@baddeley_working_2003-1; @cowan_what_2008; @oberauer_benchmarks_2018] and artificial systems [@elman_finding_1990; @nematzadeh_memory_2020] predicting and generating natural language. For example, when we are told 'Your ticket number is 172' and shortly after asked 'What is your ticket number?' we retrieve the number '172' from short-term memory.
+Flexibly maintaining and accessing recent context from short-term memory is a core computation in human [@baddeley_working_2003-1; @cowan_what_2008; @oberauer_benchmarks_2018] and artificial systems [@elman_finding_1990; @laird_soar_1987; @sumers_cognitive_2023; @nematzadeh_memory_2020] predicting and generating natural language. For example, when we are told 'Your ticket number is 172' and shortly after asked 'What is your ticket number?' we retrieve the number '172' from short-term memory.
 
 Contemporary transformer-based language models [LM, @vaswani_attention_2017] are currently the most successful algorithms at predicting words based on context and, seemingly, many natural language tasks that can be reformatted as text generation. A possible reason is that by weighing all context words in a task-relevant manner [attention, @bahdanau_neural_2014], transformers learn to retrieve the past tokens that are relevant in order to correctly predict upcoming words, a kind of short-term memory retrieval. For example, the ability to solve tasks by completing text prompts containing instructions and a small number of examples, without any explicit parameter updates, (in-context learning, see @liu_pre-train_2021, for review) suggests that transformer LMs do so by retrieving instructions and relevant examples from short-term memory.
+
+# Related work
+
+The present work is closely related to the literature investigating the mechanisms of language models in tracking recent context. [@armeni_characterizing_2022] demonstrated the ability of GPT-2 to retrieve verbatim sequences of arbitrary nouns in controlled behavioral experiments. However, this initial work did not explore attention mechanisms underlying this behavior, which are investigated presently.
+
+Multiple studies have explored how transformers are able to copy information verbatim from past context. In a series of proof-of-principle studies, [@elhage_mathematical_2021, @olsson_-context_2022] showed that small (2- or 3-layer) attention-only transformer LMs develop the so-called *induction heads* --- attention heads that learn to attend to and copy repeated patterns of arbitrary words in text. This elementary form of pattern completion ability was suggested to be at the root of the rapid generalization capacities (a.k.a in-context learning). [@wang_interpretability_2022] further showed that induction heads are also present in a larger transformer (GPT-2) and that these are used together with other attention heads in a task requiring the model to identify indirect object nouns in short sentences. Here, we tested GPT-2 attention copy mechanism in the short-term memory task containing longer sequences than previously studied, and additionally evaluated the language modeling and subject-verb agreement tasks.
 
 ```{python}
 #| echo: false
@@ -81,6 +87,28 @@ So far, we showed that transformer language models (in our case GPT-2), contain 
 
 **Copying score**
 
+# Are the effects specific to verbatim retrieval?
+
+We defined the attention heads based on their attention patterns in the task of retrieving copies of arbitrary nouns. We showed that, in most part, $\textcolor{red}{[…]}$. How specific are these results to short-term memory retrieval? Do they generalize to language tasks that do not explicitly call for retrieval of verbatim context?
+
+We set out to test the effect of targeted ablations on two tasks. We first evaluated it on the generic next-word prediction task (i.e. language modeling) and on the subject-verb agreement task.
+
+## Subject-verb agreement
+
+We evaluated GPT-2 on the dataset by [@lakretz_mechanisms_2021].[^3] The dataset consists of sentences with two nested subject-verb agreement dependencies, an inner and and outer one (e.g. *The keys~1~ that the man~2~ holds~2~ are~1~*) where subscript 1 marks the noun and the verb belonging to the outer dependency and subscript 2 marks the noun and the verb belonging to the inner dependency). In all sentences we tested, the grammatical number of nouns governing the two dependencies differed (i.e. if one was singular, the other was plural). In addition, sentences were of two possible lengths: short (7 tokens) and long (10 tokens) where the long sentences contained an additional prepositional phrase in the inner dependency (e.g. *The keys~1~ that the man~2~ \[near the cabinet\] holds~2~ are~1~* ).
+
+[^3]: The dataset was obtained from the Big Bench collection of LM benchmarks: <https://github.com/google/BIG-bench>
+
+The task was considered solved correctly if, in the output distribution of GPT-2, the probability for the correct form of the verb completing the outer dependency (marked in bold above) was higher than for the incorrect form. We report error rates, the percentage of cases where GPT-2 failed to correctly solve agreement.
+
 ## Results
+
+# Discussion
+
+# Conclusion
+
+# Limitations
+
+There are certain limitations to current work. While zero ablation seems an intuitive method to remove the contribution of an attention head in the model, it has been noted elsewhere [@elhage_mathematical_2021; @wang_interpretability_2022] that zero ablation can suffer from lack of specificity and off-distribution effects. For example, if in its normal (on-distribution) settings, the head never outputs a $\mathbf{0}$, then the downstream heads operating on its output will also be thrown off distribution. The consequence is that it is not clear where the locus of effect is and that the extent of the effects might be too harmful.
 
 ------------------------------------------------------------------------
